@@ -2,14 +2,9 @@ package il.cshaifasweng.OCSFMediatorExample.client;
 
 import il.cshaifasweng.OCSFMediatorExample.entities.Message;
 
-public class UpdateEachUserScreeningEvent {
-    private Message message;
-
-    public Message getMessage() {
-        return message;
-    }
+public class UpdateEachUserScreeningEvent extends EventHandleBase{
 
     public UpdateEachUserScreeningEvent(Message message) {
-        this.message = message;
+        super(message);
     }
 }
