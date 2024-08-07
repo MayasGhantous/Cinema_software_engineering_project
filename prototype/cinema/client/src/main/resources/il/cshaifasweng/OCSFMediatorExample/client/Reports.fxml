@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane prefHeight="502.0" prefWidth="1137.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="il.cshaifasweng.OCSFMediatorExample.client.ReportsController">
+    <children>
+        <TableView fx:id="reports_table" layoutX="14.0" layoutY="156.0" onMouseClicked="#view_report" prefHeight="325.0" prefWidth="397.0">
+            <columns>
+                <TableColumn fx:id="date_col" prefWidth="163.33338165283203" text="date" />
+                <TableColumn fx:id="branch_col" prefWidth="124.6666259765625" text="branch" />
+            </columns>
+        </TableView>
+        <ComboBox fx:id="branch_comboBox" layoutX="21.0" layoutY="25.0" prefHeight="25.0" prefWidth="175.0" promptText="branch" />
+        <DatePicker fx:id="date_" layoutX="22.0" layoutY="55.0" promptText="date" />
+        <Button layoutX="213.0" layoutY="42.0" mnemonicParsing="false" onAction="#search_report_button" text="search report" />
+        <ComboBox fx:id="id_sort" layoutX="14.0" layoutY="122.0" onAction="#get_sorted_reports" prefHeight="25.0" prefWidth="175.0" promptText="view reports sorted by:" />
+        <Text fx:id="Error_Message" fill="#f80707" layoutX="896.0" layoutY="56.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" textAlignment="CENTER" wrappingWidth="210.13671875">
+            <font>
+                <Font name="System Bold" size="15.0" />
+            </font>
+        </Text>
+        <TextField fx:id="report" layoutX="445.0" layoutY="245.0" prefHeight="236.0" prefWidth="397.0" />
+        <BarChart fx:id="complaintsChart" layoutX="433.0" layoutY="41.0" prefHeight="188.0" prefWidth="397.0">
+            <xAxis>
+                <CategoryAxis fx:id="xAxis" />
+            </xAxis>
+            <yAxis>
+                <NumberAxis fx:id="yAxis" />
+            </yAxis>
+        </BarChart>
+    </children>
+</AnchorPane>

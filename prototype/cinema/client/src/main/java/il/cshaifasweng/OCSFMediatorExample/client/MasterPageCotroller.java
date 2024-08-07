@@ -1,9 +1,11 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
+import il.cshaifasweng.OCSFMediatorExample.entities.Worker;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseEvent;
@@ -48,8 +50,8 @@ public class MasterPageCotroller {
     public void setContent(String file) {
         FXMLLoader new_content = null;
         try {
-             new_content = new FXMLLoader(getClass().getResource(file));
-             System.out.println("we are here");
+            new_content = new FXMLLoader(getClass().getResource(file));
+            System.out.println("we are here");
 
         } catch (Exception e) {
 
@@ -87,8 +89,38 @@ public class MasterPageCotroller {
         else if (menuItemText.equals("Sing out")) {
             EventBus.getDefault().post(new BeginContentChangeEnent("Movie_editing_details"));
         }
+        else if (menuItemText.equals("Reports")) {
+            if (isManager()) {
+                EventBus.getDefault().post(new BeginContentChangeEnent("Reports"));
+            } else {
+                showError("You do not have permission to view this page.");
+            }
+
+        }
 
 
+    }
+
+    private boolean isManager() {
+        try {
+            Worker worker = WorkerLogInController.worker;
+            if (worker != null && "manager".equalsIgnoreCase(((Worker) worker).getRole())) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
 
