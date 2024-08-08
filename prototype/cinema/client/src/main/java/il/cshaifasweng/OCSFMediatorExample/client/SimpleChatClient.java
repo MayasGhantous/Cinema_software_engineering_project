@@ -1,7 +1,6 @@
 package il.cshaifasweng.OCSFMediatorExample.client;
 
-import com.sun.javafx.stage.EmbeddedWindow;
-import il.cshaifasweng.OCSFMediatorExample.entities.Screening;
+import il.cshaifasweng.OCSFMediatorExample.entities.Message;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -11,10 +10,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -25,24 +26,23 @@ import org.greenrobot.eventbus.Subscribe;
 public class SimpleChatClient extends Application {
 
     private static Scene scene;
-    private SimpleClient client;
     private static Stage appStage;
-    private static Map<List<String>,List<Integer>> rooms = new HashMap<List<String>,List<Integer>>();
+    private static Map<List<String>, List<Integer>> rooms = new HashMap<>();
 
     @Override
     public void start(Stage stage) throws IOException {
-    	EventBus.getDefault().register(this);
+        EventBus.getDefault().register(this);
         create_rooms();
-        //print_rooms();
         scene = new Scene(loadFXML("host"), 640, 480);
         appStage = stage;
         stage.setScene(scene);
         stage.show();
     }
 
-    public static void setWindowTitle (String title) {
+    public static void setWindowTitle(String title) {
         appStage.setTitle(title);
     }
+
     public static String getWindowTitle() {
         return appStage.getTitle();
     }
@@ -53,41 +53,32 @@ public class SimpleChatClient extends Application {
             scene = new Scene(root);
             appStage.setScene(scene);
             appStage.show();
-        }
-        else {
+        } else {
             EventBus.getDefault().post(new BeginContentChangeEnent(pageName));
         }
     }
-
-    /*static void setRoot(String fxml) throws IOException {
-        scene.setRoot(loadFXML(fxml));
-    }*/
 
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(SimpleChatClient.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
     }
-    
-
 
     @Override
-	public void stop() throws Exception {
-		// TODO Auto-generated method stub
-    	EventBus.getDefault().unregister(this);
-		super.stop();
-	}
-
+    public void stop() throws Exception {
+        EventBus.getDefault().unregister(this);
+        super.stop();
+    }
 
     @Subscribe
     public void onMessageEvent(BaseEventBox message) {
-        if(message.getId()==13) {
+        if (message.getId() == 13) {
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
             Platform.runLater(() -> {
                 Alert alert = new Alert(AlertType.INFORMATION,
                         String.format("Message:\nId: %d\nData: %s\nTimestamp: %s\n",
                                 message.getMessage().getId(),
                                 message.getMessage().getMessage(),
-                                message.getMessage().getTimeStamp().format(dtf))
+                                message.getMessage().getTimeStamp() != null ? message.getMessage().getTimeStamp().format(dtf) : "N/A")
                 );
                 alert.setTitle("new message");
                 alert.setHeaderText("New Message:");
@@ -96,45 +87,43 @@ public class SimpleChatClient extends Application {
         }
     }
 
-
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         launch();
     }
-    public static void create_rooms()
-    {
-        rooms = new HashMap<List<String>,List<Integer>>();
-        rooms.put(Arrays.asList("Sakhnin","1"),Arrays.asList(10,10));
-        rooms.put(Arrays.asList("Sakhnin","2"),Arrays.asList(5,10));
-        rooms.put(Arrays.asList("Sakhnin","3"),Arrays.asList(7,7));
-        rooms.put(Arrays.asList("Haifa","1"),Arrays.asList(10,10));
-        rooms.put(Arrays.asList("Haifa","2"),Arrays.asList(5,10));
-        rooms.put(Arrays.asList("Haifa","3"),Arrays.asList(7,7));
-        rooms.put(Arrays.asList("Nazareth","1"),Arrays.asList(10,10));
-        rooms.put(Arrays.asList("Nazareth","2"),Arrays.asList(5,10));
-        rooms.put(Arrays.asList("Nazareth","3"),Arrays.asList(7,7));
-        rooms.put(Arrays.asList("Nhif","1"),Arrays.asList(10,10));
-        rooms.put(Arrays.asList("Nhif","2"),Arrays.asList(5,10));
-        rooms.put(Arrays.asList("Nhif","3"),Arrays.asList(7,7));
 
-
+    public static void create_rooms() {
+        rooms = new HashMap<>();
+        rooms.put(List.of("Sakhnin", "1"), List.of(10, 10));
+        rooms.put(List.of("Sakhnin", "2"), List.of(5, 10));
+        rooms.put(List.of("Sakhnin", "3"), List.of(7, 7));
+        rooms.put(List.of("Haifa", "1"), List.of(10, 10));
+        rooms.put(List.of("Haifa", "2"), List.of(5, 10));
+        rooms.put(List.of("Haifa", "3"), List.of(7, 7));
+        rooms.put(List.of("Nazareth", "1"), List.of(10, 10));
+        rooms.put(List.of("Nazareth", "2"), List.of(5, 10));
+        rooms.put(List.of("Nazareth", "3"), List.of(7, 7));
+        rooms.put(List.of("Nhif", "1"), List.of(10, 10));
+        rooms.put(List.of("Nhif", "2"), List.of(5, 10));
+        rooms.put(List.of("Nhif", "3"), List.of(7, 7));
     }
-    public static void print_rooms()
-    {
+
+    public static void print_rooms() {
         for (Map.Entry<List<String>, List<Integer>> entry : rooms.entrySet()) {
             System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
         }
     }
+
     public static List<Integer> get_rows_and_columns(List<String> keys) {
         return rooms.get(keys);
     }
-    private static void add_to_rooms(String Branch,int room_number,int row_size,int column_size) {
+
+    private static void add_to_rooms(String Branch, int room_number, int row_size, int column_size) {
         ArrayList<String> keys = new ArrayList<>();
         keys.add(Branch);
         keys.add(String.valueOf(room_number));
-        ArrayList<Integer>values = new ArrayList<Integer>();
+        ArrayList<Integer> values = new ArrayList<>();
         values.add(row_size);
         values.add(column_size);
-        rooms.put(keys,values);
+        rooms.put(keys, values);
     }
-
 }

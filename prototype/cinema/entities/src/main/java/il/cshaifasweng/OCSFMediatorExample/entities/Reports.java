@@ -28,7 +28,7 @@ public class Reports implements Serializable {
     private List<String> report_complains;
 
     @Temporal(TemporalType.DATE)
-    private Date date;
+    private Date report_date;
 
     private String branch;
 
@@ -37,11 +37,11 @@ public class Reports implements Serializable {
     }
 
     // constructor
-    public Reports(List<String> report_ticket_sells, List<String> report_multy_entry_ticket, List<String> report_complains, Date date, String branch) {
+    public Reports(List<String> report_ticket_sells, List<String> report_multy_entry_ticket, List<String> report_complains, Date report_date, String branch) {
         this.report_ticket_sells = report_ticket_sells;
         this.report_multy_entry_ticket = report_multy_entry_ticket;
         this.report_complains = report_complains;
-        this.date = date;
+        this.report_date = report_date;
         this.branch = branch;
     }
 
@@ -74,12 +74,12 @@ public class Reports implements Serializable {
         this.report_complains = report_complains;
     }
 
-    public Date getDate() {
-        return date;
+    public Date getReportDate() {
+        return report_date;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setReportDate(Date report_date) {
+        this.report_date = report_date;
     }
 
     public String getBranch() {

@@ -4,22 +4,18 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
 import javax.persistence.criteria.Join;
 
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
+import org.hibernate.*;
 import org.hibernate.query.Query;
 import com.mysql.cj.xdevapi.Client;
 import il.cshaifasweng.OCSFMediatorExample.entities.*;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.AbstractServer;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.ConnectionToClient;
 import il.cshaifasweng.OCSFMediatorExample.server.ocsf.SubscribedClient;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
@@ -29,9 +25,8 @@ import javax.persistence.criteria.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.PrivateKey;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;import java.util.List;
+import java.util.List;
 import java.time.LocalDateTime;
 
 public class SimpleServer extends AbstractServer {
@@ -347,7 +342,8 @@ public class SimpleServer extends AbstractServer {
 		session.getTransaction().commit();
 		session.close();
 	}
-
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////// REPORTS
 
 
 
@@ -572,7 +568,253 @@ public class SimpleServer extends AbstractServer {
 				} finally {
 					session.close();
 				}
+			} else if (message.getMessage().equals("#getComplainsHistogram")) {
+				System.out.println("got into getComplainsHistogram (simpleServer)");
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				List<Object[]> results = session.createQuery(
+								"SELECT c.cinema_branch, MONTH(c.time_of_complain), COUNT(c) " +
+										"FROM Complains c " +
+										"GROUP BY c.cinema_branch, MONTH(c.time_of_complain)")
+						.getResultList();
+
+				Map<String, Map<Integer, Long>> complaintsHistogram = new HashMap<>();
+				for (Object[] result : results) {
+					String branch = (String) result[0];
+					Integer month = (Integer) result[1];
+					Long count = (Long) result[2];
+
+					complaintsHistogram.putIfAbsent(branch, new HashMap<>());
+					complaintsHistogram.get(branch).put(month, count);
+				}
+
+				message.setMessage("#gotComplainsHistogram");
+				message.setObject2(complaintsHistogram);
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
+
+			} else if (message.getMessage().equals("#getMultiEntry")) {
+				System.out.println("got into getMultiEntry (simpleServer)");
+
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				List<Object[]> results = session.createQuery(
+								"SELECT m.id_user.user_id, SUM(m.remain_tickets) " +
+										"FROM MultiEntryTicket m " +
+										"GROUP BY m.id_user.user_id")
+						.getResultList();
+
+				Map<String, Long> multiEntryTicketsReport = new HashMap<>();
+				for (Object[] result : results) {
+					String userId = (String) result[0];
+					Long remainingTickets = (Long) result[1];
+					multiEntryTicketsReport.put(userId, remainingTickets);
+				}
+
+				message.setMessage("#gotMultiEntryReports");
+				message.setObject(multiEntryTicketsReport);
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
+			} else if (message.getMessage().equals("#getTicketSells")) {
+				System.out.println("got into getTicketSells (simpleServer)");
+
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				List<Object[]> results = session.createQuery(
+								"SELECT u.screening.branch, MONTH(u.date_of_purchase), COUNT(u) " +
+										"FROM UserPurchases u " +
+										"GROUP BY u.screening.branch, MONTH(u.date_of_purchase)")
+						.getResultList();
+
+				// Process the results
+				Map<String, Map<Integer, Long>> ticketSellsReport = new HashMap<>();
+				for (Object[] result : results) {
+					String branch = (String) result[0];
+					Integer month = (Integer) result[1];
+					Long count = (Long) result[2];
+
+					ticketSellsReport.putIfAbsent(branch, new HashMap<>());
+					ticketSellsReport.get(branch).put(month, count);
+				}
+
+				message.setMessage("#gotTicketSellsReports");
+				message.setObject(ticketSellsReport);
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
+
+			} else if (message.getMessage().equals("#createReports")) {
+				System.out.println("got into createReports (simpleServer)");
+
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				List<Object[]> ticketSellsResults = session.createQuery(
+								"SELECT u.screening.branch, MONTH(u.date_of_purchase), COUNT(u) " +
+										"FROM UserPurchases u " +
+										"GROUP BY u.screening.branch, MONTH(u.date_of_purchase)")
+						.getResultList();
+
+				List<Object[]> multiEntryResults = session.createQuery(
+								"SELECT m.id_user.user_id, SUM(m.remain_tickets) " +
+										"FROM MultiEntryTicket m " +
+										"GROUP BY m.id_user.user_id")
+						.getResultList();
+
+				List<Object[]> complaintsResults = session.createQuery(
+								"SELECT c.cinema_branch, MONTH(c.time_of_complain), COUNT(c) " +
+										"FROM Complains c " +
+										"GROUP BY c.cinema_branch, MONTH(c.time_of_complain)")
+						.getResultList();
+
+				List<Reports> reportsList = new ArrayList<>();
+				Map<String, List<String>> ticketSellsMap = new HashMap<>();
+				Map<String, List<String>> multiEntryMap = new HashMap<>();
+				Map<String, List<String>> complaintsMap = new HashMap<>();
+
+				for (Object[] result : ticketSellsResults) {
+					String branch = (String) result[0];
+					Integer month = (Integer) result[1];
+					Long count = (Long) result[2];
+					ticketSellsMap.computeIfAbsent(branch, k -> new ArrayList<>())
+							.add("Month: " + month + ", Ticket Sells: " + count);
+				}
+
+				for (Object[] result : multiEntryResults) {
+					String userId = (String) result[0];
+					Long remainingTickets = (Long) result[1];
+					multiEntryMap.computeIfAbsent(userId, k -> new ArrayList<>())
+							.add("Multi-Entry Tickets: " + remainingTickets);
+				}
+
+				for (Object[] result : complaintsResults) {
+					String branch = (String) result[0];
+					Integer month = (Integer) result[1];
+					Long count = (Long) result[2];
+					complaintsMap.computeIfAbsent(branch, k -> new ArrayList<>())
+							.add("Month: " + month + ", Complaints: " + count);
+				}
+
+				for (String branch : ticketSellsMap.keySet()) {
+					Reports report = new Reports(ticketSellsMap.get(branch), new ArrayList<>(), new ArrayList<>(),
+							new Date(), branch);
+					reportsList.add(report);
+				}
+
+				for (String userId : multiEntryMap.keySet()) {
+					Reports report = new Reports(new ArrayList<>(), multiEntryMap.get(userId), new ArrayList<>(),
+							new Date(), userId);
+					reportsList.add(report);
+				}
+
+				for (String branch : complaintsMap.keySet()) {
+					Reports report = new Reports(new ArrayList<>(), new ArrayList<>(), complaintsMap.get(branch),
+							new Date(), branch);
+					reportsList.add(report);
+				}
+
+				for (Reports report : reportsList) {
+					session.save(report);
+				}
+
+				message.setMessage("#reportsCreated");
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
+			} else if (message.getMessage().equals("#fetchReports")) {
+				System.out.println("got into fetchReports (simpleServer)");
+
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				List<Reports> reportsList = session.createQuery("FROM Reports", Reports.class).getResultList();
+
+				for (Reports report : reportsList) {
+					// Initialize collections to avoid LazyInitializationException
+					Hibernate.initialize(report.getReport_ticket_sells());
+					Hibernate.initialize(report.getReport_multy_entry_ticket());
+					Hibernate.initialize(report.getReport_complains());
+				}
+
+				message.setMessage("#fetchedReports");
+				message.setObject2(reportsList);
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
+			} else if (message.getMessage().equals("#searchReportsByBranch")) {
+				System.out.println("got into searchReportsByBranch (simpleServer)");
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				String branch = message.getObject().toString();
+
+				System.out.println("Search Criteria - Branch: " + branch);
+
+				List<Reports> reportsList = session.createQuery(
+								"FROM Reports r WHERE r.branch = :branch", Reports.class)
+						.setParameter("branch", branch)
+						.getResultList();
+
+				// Initialize collections to avoid LazyInitializationException
+				for (Reports report : reportsList) {
+					Hibernate.initialize(report.getReport_ticket_sells());
+					Hibernate.initialize(report.getReport_multy_entry_ticket());
+					Hibernate.initialize(report.getReport_complains());
+				}
+
+				System.out.println("Found Reports: " + reportsList.size());
+				for (Reports report : reportsList) {
+					System.out.println("Report: Branch = " + report.getBranch() + ", Date = " + report.getReportDate());
+				}
+
+				message.setMessage("#foundReports");
+				message.setObject2(reportsList);
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
 			}
+			else if (message.getMessage().equals("#searchReportsByBranchAndDate")) {
+				System.out.println("got into searchReportsByBranchAndDate (simpleServer)");
+				Session session = sessionFactory.openSession();
+				Transaction transaction = session.beginTransaction();
+
+				String branch = message.getObject().toString();
+				Date date = (Date) message.getObject2();
+
+				System.out.println("Search Criteria - Branch: " + branch + ", Date: " + date);
+
+				List<Reports> reportsList = session.createQuery(
+								"FROM Reports r WHERE r.branch = :branch AND r.report_date = :date", Reports.class)
+						.setParameter("branch", branch)
+						.setParameter("date", date)
+						.getResultList();
+
+				// Initialize collections to avoid LazyInitializationException
+				for (Reports report : reportsList) {
+					Hibernate.initialize(report.getReport_ticket_sells());
+					Hibernate.initialize(report.getReport_multy_entry_ticket());
+					Hibernate.initialize(report.getReport_complains());
+				}
+
+				System.out.println("Found Reports: " + reportsList.size());
+				for (Reports report : reportsList) {
+					System.out.println("Report: Branch = " + report.getBranch() + ", Date = " + report.getReportDate());
+				}
+
+				message.setMessage("#foundReports");
+				message.setObject2(reportsList);
+				client.sendToClient(message);
+				transaction.commit();
+				session.close();
+			}
+
+
+
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		} catch (Exception e) {
