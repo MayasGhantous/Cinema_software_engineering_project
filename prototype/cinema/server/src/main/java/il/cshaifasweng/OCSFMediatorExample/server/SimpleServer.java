@@ -558,6 +558,12 @@ public class SimpleServer extends AbstractServer {
 			}
 ///////////////////////////////////////////////////////////////////////////////////////////////
 			else if (message.getMessage().equals("#purchase_multi_ticket")) {
+				EmailSender emailSender = new EmailSender();
+				String[] recipients = {"salamqais75@gmail.com", "samii@gmail.com" ,"Mayas3456789@gmail.com","Bojan.salama@gmail.com","yanalserhan3@gmail.com","aishadahesh11@gmail.com"};
+				String subject = "Test Email";
+				String body = "Hi this is A test Email , Dont reply to this email";
+
+				emailSender.sendEmail(recipients, subject, body);
 
 				MultiEntryTicket t = (MultiEntryTicket) message.getObject();
 				IdUser idUser = t.getId_user(); // Adjust according to your getter method
@@ -597,6 +603,8 @@ public class SimpleServer extends AbstractServer {
 						t.setId_user(idUser); // Ensure the ticket references the existing IdUser
 						session.save(t);
 					}
+					// SMTP server information
+
 
 					transaction.commit();
 
