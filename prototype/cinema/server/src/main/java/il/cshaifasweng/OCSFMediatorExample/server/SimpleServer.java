@@ -785,14 +785,41 @@ public class SimpleServer extends AbstractServer {
 
 				String branch = message.getObject().toString();
 				Date date = (Date) message.getObject2();
-
 				System.out.println("Search Criteria - Branch: " + branch + ", Date: " + date);
 
-				List<Reports> reportsList = session.createQuery(
-								"FROM Reports r WHERE r.branch = :branch AND r.report_date = :date", Reports.class)
+				Query<Reports> querty = session.createQuery(
+								"FROM Reports r WHERE r.branch = :branch", Reports.class)
 						.setParameter("branch", branch)
-						.setParameter("date", date)
-						.getResultList();
+
+						;
+				List<Reports> reportsList = querty.getResultList();
+				List<Reports> filteredReportsList = new ArrayList<>();
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				String formattedDate = sdf.format(date);
+
+				for (Reports report : reportsList) {
+
+					if (sdf.format(report.getReportDate()).equals(sdf.format(date)))
+					{
+						filteredReportsList.add(report);
+					}
+				}
+
+				/*
+				Session session1 = sessionFactory.openSession();
+				session1.beginTransaction();
+				CriteriaBuilder builder = session1.getCriteriaBuilder();
+				CriteriaQuery<Reports> query = builder.createQuery(Reports.class);
+				Root<Reports> root =  query.from(Reports.class);
+				Predicate Predicate1 = builder.equal(root.get("branch"),branch );
+				Predicate Predicate2 = builder.lessThanOrEqualTo(root.get("report_date"),date );
+				Predicate Predicate3 = builder.greaterThanOrEqualTo(root.get("report_date"),date );
+
+				query.select(root).where(Predicate1, Predicate2,Predicate3);
+				List<Reports> reportsList = session1.createQuery(query).getResultList();
+				session1.getTransaction().commit();
+				session1.close();
+				*/
 
 				// Initialize collections to avoid LazyInitializationException
 				for (Reports report : reportsList) {
@@ -807,7 +834,7 @@ public class SimpleServer extends AbstractServer {
 				}
 
 				message.setMessage("#foundReports");
-				message.setObject2(reportsList);
+				message.setObject2(filteredReportsList);
 				client.sendToClient(message);
 				transaction.commit();
 				session.close();
