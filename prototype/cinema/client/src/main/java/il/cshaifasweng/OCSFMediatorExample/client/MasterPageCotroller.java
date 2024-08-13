@@ -94,8 +94,9 @@ public class MasterPageCotroller {
             EventBus.getDefault().post(new BeginContentChangeEnent("WorkerLogIn"));
         } else if (menuItemText.equals("Purchases")) {
             EventBus.getDefault().post(new BeginContentChangeEnent("UserPurchases"));
-        }
-        else if(menuItemText.equals("Complains"))
+        } else if (menuItemText.equals("Edited Prices")) {
+            EventBus.getDefault().post(new BeginContentChangeEnent("ChangesManager"));
+        } else if(menuItemText.equals("Complains"))
         {
             EventBus.getDefault().post(new BeginContentChangeEnent("UserComplains"));
         }

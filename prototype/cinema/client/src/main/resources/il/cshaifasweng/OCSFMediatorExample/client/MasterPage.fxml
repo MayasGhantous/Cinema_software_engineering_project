@@ -45,7 +45,7 @@
             <Menu mnemonicParsing="false" text="Manager">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#handle_action" text="Reports" />
-                  <MenuItem mnemonicParsing="false" text="Edited Prices" />
+                  <MenuItem mnemonicParsing="false" onAction="#handle_action" text="Edited Prices" />
               </items>
             </Menu>
                 <Menu fx:id="user_action" mnemonicParsing="false" styleClass="cool-menu" text="User Action">

@@ -377,7 +377,46 @@ public class SimpleServer extends AbstractServer {
 		return data;
 
 	}
+	
+	private void handle_submit_complaint(Complains complaint) {
+		Session session = sessionFactory.openSession();
+		session.beginTransaction();
+		session.save(complaint);
+		session.getTransaction().commit();
+	}
 
+
+	private List<Complains> handle_get_user_complaints(String id) throws Exception {
+		Session session = sessionFactory.openSession();
+		session.beginTransaction();
+		CriteriaBuilder builder = session.getCriteriaBuilder();
+		CriteriaQuery<Complains> query = builder.createQuery(Complains.class);
+		Root<Complains> root = query.from(Complains.class);  // Specify the root of the query
+		query.select(root);
+		List<Complains> data = session.createQuery(query).getResultList();
+		session.getTransaction().commit();
+		session.close();
+		return data;
+	}
+
+	private List<EditedDetails> getEditedDetails() {
+		Session session = sessionFactory.openSession();
+		session.beginTransaction();
+		CriteriaBuilder builder = session.getCriteriaBuilder();
+		CriteriaQuery<EditedDetails> query = builder.createQuery(EditedDetails.class);
+		query.from(EditedDetails.class);
+		List<EditedDetails> data = session.createQuery(query).getResultList();
+		session.getTransaction().commit();
+		session.close();
+		return data;
+	}
+	private void removeEditedDetails(EditedDetails change) throws Exception {
+		Session session = sessionFactory.openSession();
+		session.beginTransaction();
+		session.delete(change);
+		session.getTransaction().commit();
+		session.close();
+	}
 
 
 
@@ -610,6 +649,42 @@ public class SimpleServer extends AbstractServer {
 				} finally {
 					session.close();
 				}
+			} else if (message.getMessage().equals("#GetUserComplaints")) {
+				//System.out.println("get user complaints");
+				message.setMessage("#ShowUserComplaints");
+				List<Complains> current_complaints = handle_get_user_complaints("0");
+				message.setObject(current_complaints);
+				client.sendToClient(message);
+				//System.out.println("sent user complaints");
+			} else if (message.getMessage().equals("#SubmitComplaint")) {
+				//System.out.println("submit user complaint");
+				Complains complaint = (Complains) message.getObject();
+				handle_submit_complaint(complaint);
+				message.setMessage("#ShowUserComplaints");
+				List<Complains> updated_complaints = handle_get_user_complaints("0");
+				message.setObject(updated_complaints);
+				client.sendToClient(message);
+			} else if (message.getMessage().equals("#GetCMEditedDetails")) {
+				//System.out.println("get cme details");
+				List<EditedDetails> editedDetailsList = getEditedDetails();
+				message.setObject(editedDetailsList);
+				message.setMessage("#ShowCMEditedDetails");
+				client.sendToClient(message);
+			} else if (message.getMessage().equals("#UpdateMoviePrice")) {
+				EditedDetails change = (EditedDetails) message.getObject();
+				update_movie(change.getMovie());
+				removeEditedDetails(change);
+				List<EditedDetails> editedDetailsList = getEditedDetails();
+				message.setObject(editedDetailsList);
+				message.setMessage("#ShowCMEditedDetails");
+				sendToAllClients(message);
+			} else if (message.getMessage().equals("#DenyMoviePrice")) {
+				EditedDetails change = (EditedDetails) message.getObject();
+				removeEditedDetails(change);
+				List<EditedDetails> editedDetailsList = getEditedDetails();
+				message.setObject(editedDetailsList);
+				message.setMessage("#ShowCMEditedDetails");
+				sendToAllClients(message);
 			}
 		} catch (IOException e1) {
 			e1.printStackTrace();

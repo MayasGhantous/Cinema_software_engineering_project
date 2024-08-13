@@ -89,7 +89,13 @@ public class SimpleClient extends AbstractClient {
 				message.getMessage().equals("#serverError")) {
 			// Handle login related messages
 			EventBus.getDefault().post(new BaseEventBox("SERVER_ERROR_MESSAGE1", message));
-		} 
+		}
+		else if(message.getMessage().equals("#ShowUserComplaints")){
+			EventBus.getDefault().post(new BaseEventBox("SHOW_USER_COMPLAINTS", message));
+		}
+		else if(message.getMessage().equals("#ShowCMEditedDetails")){
+			EventBus.getDefault().post(new BaseEventBox("SHOW_CM_CHANGES", message));
+		}
 		else {
 			EventBus.getDefault().post(new BaseEventBox("WRONG_NAMEING", message));
 		}
