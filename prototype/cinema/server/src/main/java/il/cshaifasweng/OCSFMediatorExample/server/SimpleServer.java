@@ -1013,6 +1013,67 @@ public class SimpleServer extends AbstractServer {
 		}
 	}
 
+
+	private List <IdUser> getAllMultiTicketUsers(){
+		Session session = sessionFactory.openSession();
+		Transaction transaction = session.beginTransaction();
+		String queryString = "SELECT MT.id_user FROM MultiEntryTicket MT";
+		Query<IdUser> query = session.createQuery(queryString, IdUser.class);
+		List <IdUser> idUsers = query.getResultList();
+		transaction.commit();
+		session.close();
+		return idUsers;
+	}
+
+
+
+	private void newMovieAnnouncement(IdUser idUser,Date date, Movie movie){
+		//EmailSender emailSender = new EmailSender();
+		//String[] recipients = {idUser.getEmail()};
+		//String subject = "NEW MOVIE ANNOUNCEMENT FOR ALL MULTI TICKET OWNERS";
+
+		String name = idUser.getName();
+		//String id = idUser.getUser_id();
+		//LocalDate date = LocalDate.now();
+		//DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+		//String formattedDate = date.format(formatter);
+
+		String body = "<html>"
+				+ "<body style='font-family: Arial, sans-serif; color: #333;'>"
+				+ "<div style='max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;'>"
+				+ "<div style='text-align: center;'>"
+				+ "<img src='YOUR_LOGO_URL' alt='Luna Aura' style='width: 100px; margin-bottom: 20px;'/>"
+				+ "<h1 style='font-size: 24px; color: #555;'>\uD83C\uDFAC✨ NEW MOVIE ANNOUNCEMENT! \uD83C\uDFAC✨</h1>"
+				+ "</div>"
+				+ "<h2 style='color: #555;'> Lights, Camera, Action! </h2>"
+				+ "<p>Dear mr/ms. " + name + " and ALL ladies and gentlemen who ever bought a multi Ticket from LUNA AURA!</p>"
+				+ "<p>Prepare to be dazzled by the most anticipated cinematic experience of the year! Step into a world of wonder and imagination as we bring to the big screen a movie event like no other.</p>"
+				+ "<p>\uD83C\uDF7F Premiering this Fall at LUNA AURA \uD83C\uDF7F</p>"
+				+ "<h2 style='color: #555;'> \uD83D\uDD2E \"" + movie.getMovie_name() + "\" \uD83D\uDD2E </h2>"
+				+ "<p>From the visionary director of " + movie.getDirector() + " and the actor " +movie.getMain_actors()+", comes a story that will sweep you off your feet and take you on an unforgettable journey. </p>"
+				+ "<h2 style='color: #555;'> \uD83C\uDF1F A Must-See Event \uD83C\uDF1F </h2>"
+				+ "<p>Don’t miss your chance to be part of this cinematic revolution! Mark your calendars and join us for the exclusive premiere of"+ movie.getMovie_name() +"– where fantasy meets reality and dreams come alive on the silver screen.  </p>"
+				+ "<p> Book your seats and be among the first to witness a movie that critics are already calling “a masterpiece for the ages.” </p>"
+				+ "<p> The movie will be available at  your favorite cinema LUNA AURA at "+ date.toString() +" ! See ya there!</p>"
+				+ "<hr style='border: 0; height: 1px; background-color: #ddd;'/>"
+				+ "<p>Best regards,<br/>Luna Aura Team</p>"
+				+ "</div>"
+				+ "</body>"
+				+ "</html>";
+
+		EmailScheduler emailScheduler = new EmailScheduler();
+		emailScheduler.scheduleEmail(
+				idUser.getEmail(),
+				"Schedule the New announcement",
+				body,
+				date
+		);
+		//emailSender.sendEmail(recipients, subject, body);
+	}
+
+
+
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1650,6 +1711,42 @@ public class SimpleServer extends AbstractServer {
 					message1.setObject(screening);
 
 					client.sendToClient(message1);
+
+					List <Screening> screeningList = getScreeningForMovie(screening.getMovie());
+					Date earliest_date = screeningList.getFirst().getDate_time();
+					Date today = new Date();
+					for (Screening s : screeningList) {
+						if(s.getDate_time().before(earliest_date)){
+							earliest_date = s.getDate_time();
+						}
+					}
+
+					if(earliest_date.before(today)){
+						screening.getMovie().setNotified(true);
+					}
+
+					else if(earliest_date.equals(today) && !screening.getMovie().isNotified()){
+						//notify all multi ticket owners
+						List <IdUser> idUserList = getAllMultiTicketUsers();
+
+						for (IdUser idUser : idUserList){
+							newMovieAnnouncement(idUser,earliest_date,screening.getMovie());
+						}
+
+						screening.getMovie().setNotified(true);
+					}
+
+					else{
+						//notify all multi ticket owners
+						List <IdUser> idUserList = getAllMultiTicketUsers();
+
+						for (IdUser idUser : idUserList){
+							newMovieAnnouncement(idUser,earliest_date,screening.getMovie());
+						}
+
+						screening.getMovie().setNotified(true);
+					}
+
 				}
 
 				else {

@@ -25,6 +25,8 @@ public class Movie implements Serializable {
     private String category;
     private String description_;
 
+    private boolean notified;
+
     @Temporal(TemporalType.TIME)
     private Date time_;
 
@@ -50,6 +52,7 @@ public class Movie implements Serializable {
         this.time_ = time_;
         this.year_ = year_;
         this.movie_link = movie_link;
+        this.notified = false;
     }
 
     public Movie() {
@@ -158,5 +161,13 @@ public class Movie implements Serializable {
                 "Rating: " + rating + " / 10" + "\n" +
                 "Category: " + category + "\n" +
                 "Production Year: " + year_ + "\n";
+    }
+
+    public boolean isNotified() {
+        return notified;
+    }
+
+    public void setNotified(boolean notified) {
+        this.notified = notified;
     }
 }
